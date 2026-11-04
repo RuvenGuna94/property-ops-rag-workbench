@@ -127,17 +127,19 @@ and sanitised evidence are intended for publication.
 
 | Path | Purpose |
 | --- | --- |
-| `data/property_ops/ingest/` | 22 current documents: 10 for S3 and 12 for Google Drive |
-| `data/property_ops/archive_do_not_ingest/` | Two superseded revisions for revision-selection checks |
-| `data/property_ops/evaluation_do_not_ingest/questions.jsonl` | 50 evaluation cases with expected answers and evidence references |
-| `data/property_ops/database/` | Fictional asset records in CSV and reproducible SQLite SQL |
-| `data/property_ops/manifest.json` | Document versions, source paths and SHA256 hashes |
-| `data/property_ops/access_policy.json` | Intended access scenarios, not an implemented security control |
+| `data/documents/google_drive/` | 12 current profiles and operating procedures |
+| `data/documents/s3/` | 10 current contracts and equipment manuals |
+| `data/documents/manifest.json` | Document IDs, revisions, source paths and SHA256 hashes |
+| `data/database/` | Fictional asset records in CSV and reproducible SQLite SQL |
+| `evaluations/cases.jsonl` | 50 evaluation cases with answers and evidence references |
+| `evaluations/fixtures/` | Superseded documents and intended access expectations |
 | `tools/` | Offline validation and ingestion inventory commands |
 
-Only documents under `ingest/` are ingestion candidates. Keep evaluation
-answers, archived revisions, database files and metadata outside the retrieval
-corpus. See [the dataset reference](data/property_ops/README.md).
+Ingestion selects only current manifest entries under `data/documents/`.
+Do not recursively ingest `data/` or the repository. Evaluation fixtures,
+expected answers, database records and the manifest itself are not ingestion
+inputs. See [the dataset reference](data/README.md) and
+[evaluation guidance](evaluations/README.md).
 
 ## Run the offline checks
 
@@ -156,7 +158,7 @@ It does not measure model quality or enforce authorization.
 Prepare the current documents and a private source inventory:
 
 ```bash
-python3 tools/ingestion_inventory.py prepare --dataset data/property_ops --out runtime/ingestion
+python3 tools/ingestion_inventory.py prepare --dataset data/documents --out runtime/ingestion
 ```
 
 The output directory must not already exist. This creates an upload selection
@@ -164,7 +166,7 @@ and `source_ledger.csv`; it does not upload or ingest documents. After recording
 ingestion metadata, check the inventory structure with:
 
 ```bash
-python3 tools/ingestion_inventory.py audit --dataset data/property_ops --ledger runtime/ingestion/source_ledger.csv
+python3 tools/ingestion_inventory.py audit --dataset data/documents --ledger runtime/ingestion/source_ledger.csv
 ```
 
 The inventory can contain account aliases and provider references, so keep it

@@ -14,6 +14,11 @@ FIELDS = ['version_id','building_id','store','local_sha256','upload_path',
 def load_documents(dataset):
     dataset = Path(dataset).resolve()
     manifest = json.loads((dataset / 'manifest.json').read_text(encoding='utf-8'))
+    if manifest.get('path_base') != 'repository_root':
+        raise ValueError('Manifest paths must be relative to the repository root.')
+    repository = dataset.parents[1]
+    if dataset != repository / 'data' / 'documents':
+        raise ValueError('Expected the corpus directory at data/documents.')
     if manifest.get('dataset_version') != '1.0.0':
         raise ValueError('This helper expects dataset version 1.0.0.')
     docs = [d for d in manifest['documents'] if d.get('ingest_default')]
@@ -23,9 +28,9 @@ def load_documents(dataset):
     for d in docs:
         if d['status'] != 'current' or d['store'] not in ('s3','google_drive') or d['building_id'] not in ('A','B'):
             raise ValueError('Unexpected status, store or building.')
-        source = (dataset / d['path']).resolve()
+        source = (repository / d['path']).resolve()
         relative = source.relative_to(dataset)
-        expected = Path('ingest') / d['store'] / ('Building_' + d['building_id'])
+        expected = Path(d['store']) / ('Building_' + d['building_id'])
         if relative.parent != expected or source.suffix != '.docx':
             raise ValueError('Document path is outside its intended ingestion folder.')
         if source.stem != d['version_id']:
@@ -44,7 +49,7 @@ def prepare(dataset, output):
     output.mkdir(parents=True, exist_ok=False)
     rows=[]
     for d in sorted(docs,key=lambda x:x['version_id']):
-        source = dataset/d['path']
+        source = dataset.parents[1]/d['path']
         relative=Path(d['store'])/('Building_'+d['building_id'])/source.name
         dest=output/'upload_current'/relative
         dest.parent.mkdir(parents=True,exist_ok=True)
