@@ -12,8 +12,10 @@ single question-and-answer workflow. Its design combines retrieval-augmented
 generation (RAG) with read-only database tools, operational telemetry and
 evidence-based evaluation.
 
-**Status:** Under active development. The repository currently contains project
-scaffolding; implementation and verified results will be added incrementally.
+**Status:** Under active development. This repository contains a reproducible
+fictional property dataset, offline validation and ingestion inventory tooling.
+The asset API and observability stack shown below are planned components; their
+implementation and verified results are not yet included.
 
 ## The problem in one question
 
@@ -120,6 +122,53 @@ The initial system is read-only. It does not create work orders or permit
 model-generated SQL. Credentials, runtime environments and raw evidence stay
 outside this source repository; only reviewed source files, fictional fixtures
 and sanitised evidence are intended for publication.
+
+## Repository layout
+
+| Path | Purpose |
+| --- | --- |
+| `data/property_ops/ingest/` | 22 current documents: 10 for S3 and 12 for Google Drive |
+| `data/property_ops/archive_do_not_ingest/` | Two superseded revisions for revision-selection checks |
+| `data/property_ops/evaluation_do_not_ingest/questions.jsonl` | 50 evaluation cases with expected answers and evidence references |
+| `data/property_ops/database/` | Fictional asset records in CSV and reproducible SQLite SQL |
+| `data/property_ops/manifest.json` | Document versions, source paths and SHA256 hashes |
+| `data/property_ops/access_policy.json` | Intended access scenarios, not an implemented security control |
+| `tools/` | Offline validation and ingestion inventory commands |
+
+Only documents under `ingest/` are ingestion candidates. Keep evaluation
+answers, archived revisions, database files and metadata outside the retrieval
+corpus. See [the dataset reference](data/property_ops/README.md).
+
+## Run the offline checks
+
+Python 3.10 or later is required. These tools use only the standard library.
+Run from the repository root:
+
+```bash
+python3 tools/validate_dataset.py
+```
+
+The validator checks hashes, evidence references, expected SQL results,
+database integrity, CSV consistency and asset manual references. It rebuilds
+SQLite in memory, requiring no credentials or running OpenRAG services.
+It does not measure model quality or enforce authorization.
+
+Prepare the current documents and a private source inventory:
+
+```bash
+python3 tools/ingestion_inventory.py prepare --dataset data/property_ops --out runtime/ingestion
+```
+
+The output directory must not already exist. This creates an upload selection
+and `source_ledger.csv`; it does not upload or ingest documents. After recording
+ingestion metadata, check the inventory structure with:
+
+```bash
+python3 tools/ingestion_inventory.py audit --dataset data/property_ops --ledger runtime/ingestion/source_ledger.csv
+```
+
+The inventory can contain account aliases and provider references, so keep it
+under the ignored `runtime/` directory.
 
 ## Project foundations
 

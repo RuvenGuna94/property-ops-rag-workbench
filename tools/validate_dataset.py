@@ -1,10 +1,11 @@
 """Offline consistency checks. No network access and no changes to the dataset."""
 from pathlib import Path
+import csv
 import hashlib
 import json
 import sqlite3
 
-root = Path(__file__).resolve().parent
+root = Path(__file__).resolve().parents[1] / 'data' / 'property_ops'
 manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
 docs = manifest['documents']
 assert len(docs) == 24
@@ -13,8 +14,8 @@ refs = {d['version_id'] + '#' + s for d in docs for s in d['sections']}
 for item in docs:
     path = root / item['path']
     assert hashlib.sha256(path.read_bytes()).hexdigest() == item['sha256'], path
-database = (root / 'database/property_ops.sqlite').as_uri() + '?mode=ro'
-with sqlite3.connect(database, uri=True) as db:
+with sqlite3.connect(':memory:') as db:
+    db.executescript((root / 'database/rebuild.sql').read_text(encoding='utf-8'))
     assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
     assert not db.execute('PRAGMA foreign_key_check').fetchall()
     cases = [json.loads(line) for line in (root / 'evaluation_do_not_ingest/questions.jsonl').read_text(encoding='utf-8').splitlines()]
@@ -30,10 +31,15 @@ with sqlite3.connect(database, uri=True) as db:
         if case['sql']:
             assert case['sql'].startswith('SELECT ')
             assert [list(r) for r in db.execute(case['sql'], case['sql_params'])] == case['expected_db_rows'], case['id']
-    with sqlite3.connect(':memory:') as clone:
-        clone.executescript((root / 'database/rebuild.sql').read_text(encoding='utf-8'))
-        assert not clone.execute('PRAGMA foreign_key_check').fetchall()
-        for table in ('buildings', 'assets', 'maintenance_records', 'dataset_metadata'):
-            assert sorted(db.execute(f'SELECT * FROM {table}').fetchall()) == sorted(clone.execute(f'SELECT * FROM {table}').fetchall())
-print('PASS: document hashes, evidence references, SQL answers, database integrity and rebuild consistency.')
+    for table in ('buildings', 'assets', 'maintenance_records'):
+        with (root / 'database' / (table + '.csv')).open(encoding='utf-8-sig', newline='') as handle:
+            reader = csv.DictReader(handle)
+            columns = reader.fieldnames
+            assert columns and all(c.replace('_', '').isalnum() for c in columns)
+            expected = sorted(tuple(row[c] or None for c in columns) for row in reader)
+        actual = sorted(db.execute('SELECT ' + ','.join(columns) + ' FROM ' + table).fetchall())
+        assert actual == expected, table
+    for (manual,) in db.execute('SELECT manual_version_id FROM assets'):
+        assert any(d['version_id'] == manual and d['status'] == 'current' for d in docs), manual
+print('PASS: document hashes, evidence references, SQL answers, SQL rebuild integrity, CSV consistency and asset manual references.')
 print('This does not test OpenRAG ingestion, model quality or authorization enforcement.')
