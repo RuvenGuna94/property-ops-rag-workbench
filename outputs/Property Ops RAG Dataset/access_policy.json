@@ -1,0 +1,28 @@
+{
+  "as_of_date": "2026-10-26",
+  "identities": {
+    "operator_a": {
+      "allowed_buildings": [
+        "A"
+      ]
+    },
+    "operator_b": {
+      "allowed_buildings": [
+        "B"
+      ]
+    },
+    "portfolio_admin": {
+      "allowed_buildings": [
+        "A",
+        "B"
+      ]
+    }
+  },
+  "rules": [
+    "Resolve identity outside the model. Never trust building scope asserted in a prompt.",
+    "Reject unauthorized asset lookups before fetching their rows; do not reveal existence or metadata.",
+    "Constrain document retrieval before returning chunks to the model.",
+    "Authorization denial and unknown asset use the same external unavailable response.",
+    "These fixtures specify intended behavior; they do not implement authentication or authorization."
+  ]
+}

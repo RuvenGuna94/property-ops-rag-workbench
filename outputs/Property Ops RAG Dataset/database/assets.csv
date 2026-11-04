@@ -1,0 +1,7 @@
+asset_id,building_id,asset_code,asset_type,model,location,condition,manual_version_id
+A-AHU-01,A,AHU-01,air_handling_unit,Aster AH-40,Level 2 plant room,operational,A-MAN-AHU-R1
+A-PUMP-01,A,PUMP-01,transfer_pump,Brook TP-12,Level 2 plant room,operational,A-MAN-PUMP-R1
+A-FAN-01,A,FAN-01,exhaust_fan,Cirrus EF-8,Level 2 plant room,attention_required,A-MAN-FAN-R1
+B-AHU-01,B,AHU-01,air_handling_unit,Aster AH-60,Level 5 plant room,operational,B-MAN-AHU-R1
+B-PUMP-01,B,PUMP-01,transfer_pump,Brook TP-18,Level 5 plant room,attention_required,B-MAN-PUMP-R1
+B-FAN-01,B,FAN-01,exhaust_fan,Cirrus EF-10,Level 5 plant room,operational,B-MAN-FAN-R1

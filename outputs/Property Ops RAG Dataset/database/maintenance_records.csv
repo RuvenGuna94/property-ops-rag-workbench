@@ -1,0 +1,19 @@
+record_id,asset_id,performed_on,status,work_order_id,summary,next_due_date
+MR-A-01-01,A-AHU-01,2026-07-11,completed,WO-A-01-01,Administrative visit completed; schedule reviewed.,2026-08-11
+MR-A-01-02,A-AHU-01,2026-08-11,completed,WO-A-01-02,Administrative visit completed; schedule reviewed.,2026-09-11
+MR-A-01-03,A-AHU-01,2026-09-11,completed,WO-A-01-03,Visit report accepted; next approved date recorded.,2026-11-10
+MR-A-02-01,A-PUMP-01,2026-07-12,completed,WO-A-02-01,Administrative visit completed; schedule reviewed.,2026-08-12
+MR-A-02-02,A-PUMP-01,2026-08-12,completed,WO-A-02-02,Administrative visit completed; schedule reviewed.,2026-09-12
+MR-A-02-03,A-PUMP-01,2026-09-12,completed,WO-A-02-03,Visit report accepted; next approved date recorded.,2026-11-12
+MR-A-03-01,A-FAN-01,2026-07-13,completed,WO-A-03-01,Administrative visit completed; schedule reviewed.,2026-08-13
+MR-A-03-02,A-FAN-01,2026-08-13,completed,WO-A-03-02,Administrative visit completed; schedule reviewed.,2026-09-13
+MR-A-03-03,A-FAN-01,2026-09-13,completed,WO-A-03-03,Visit report accepted; next approved date recorded.,2026-10-20
+MR-B-01-01,B-AHU-01,2026-07-11,completed,WO-B-01-01,Administrative visit completed; schedule reviewed.,2026-08-11
+MR-B-01-02,B-AHU-01,2026-08-11,completed,WO-B-01-02,Administrative visit completed; schedule reviewed.,2026-09-11
+MR-B-01-03,B-AHU-01,2026-09-11,completed,WO-B-01-03,Visit report accepted; next approved date recorded.,2026-11-17
+MR-B-02-01,B-PUMP-01,2026-07-12,completed,WO-B-02-01,Administrative visit completed; schedule reviewed.,2026-08-12
+MR-B-02-02,B-PUMP-01,2026-08-12,completed,WO-B-02-02,Administrative visit completed; schedule reviewed.,2026-09-12
+MR-B-02-03,B-PUMP-01,2026-09-12,completed,WO-B-02-03,Follow-up scheduling awaits manager confirmation.,
+MR-B-03-01,B-FAN-01,2026-07-13,completed,WO-B-03-01,Administrative visit completed; schedule reviewed.,2026-08-13
+MR-B-03-02,B-FAN-01,2026-08-13,completed,WO-B-03-02,Administrative visit completed; schedule reviewed.,2026-09-13
+MR-B-03-03,B-FAN-01,2026-09-13,completed,WO-B-03-03,Visit report accepted; next approved date recorded.,2026-11-19

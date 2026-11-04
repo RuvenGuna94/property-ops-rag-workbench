@@ -1,0 +1,25 @@
+{
+  "dataset_version": "1.0.0",
+  "checks_passed": [
+    "24 source documents, 22 current",
+    "50 unique evaluation IDs",
+    "All document evidence sections resolve",
+    "All database evidence references resolve",
+    "All SQL expected rows match",
+    "Foreign keys and SQLite integrity pass",
+    "SQL rebuild matches database content",
+    "Asset manual references resolve"
+  ],
+  "counts": {
+    "buildings": 2,
+    "assets": 6,
+    "maintenance_records": 18,
+    "evaluation_cases": 50
+  },
+  "not_tested": [
+    "Actual OpenRAG ingestion",
+    "Langflow tool execution",
+    "Identity enforcement",
+    "Model answer quality"
+  ]
+}
