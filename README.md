@@ -1,51 +1,66 @@
 # Property Operations RAG Workbench
 
-**Property operations answers backed by documents, asset records and inspectable evidence.**
+Answer property operations questions with evidence from contracts, manuals,
+procedures and asset records.
 
-Property teams work across service contracts, equipment manuals, operating
-procedures and maintenance records. Answering a question often means finding
-the right document, checking its revision and reconciling it with the recorded
-state of an asset.
+Property teams often need to check several sources to answer one question.
+The vendor sits in a contract, the preparation steps in a procedure, and the
+next service date in a maintenance record. This project brings those sources
+into a retrieval-augmented generation (RAG) workflow with document citations
+and planned read-only asset lookups.
 
-Property Operations RAG Workbench brings these information sources into a
-single question-and-answer workflow. Its design combines retrieval-augmented
-generation (RAG) with read-only database tools, operational telemetry and
-evidence-based evaluation.
+## Current status
 
-**Status:** Under active development. This repository contains a reproducible
-fictional property dataset, offline validation and ingestion inventory tooling.
-The asset API and observability stack shown below are planned components; their
-implementation and verified results are not yet included.
+The local OpenRAG deployment ingests ten contracts and manuals from Amazon S3
+and twelve profiles and SOPs from Google Drive. A retrieval smoke test returned
+an answer citing both an S3 contract and a Drive procedure.
 
-## The problem in one question
+This repository contains the fictional dataset, offline validation tools,
+connector helpers and the S3 investigation with screenshots. The FastAPI asset
+service, database tools and observability stack remain planned work.
+
+## S3 integration investigation
+
+OpenRAG 0.8.0 hid S3 from the interface despite configured AWS credentials.
+Source inspection identified separate backend availability and frontend
+visibility gates. A local development override enabled the backend connector;
+the native API then ingested S3 documents while Google sign-in and Drive
+remained active.
+
+The case study records the investigation, an intermediate parsing failure,
+the workaround and the successful retrieval test.
+
+- [Engineering case study](docs/engineering/s3-connector-workaround.md)
+- [Screenshots and validation results](docs/evidence/s3-validation.md)
+- [Setup and ingestion helpers](scripts/s3/README.md)
+
+The workaround applies to this release and local development setup. Production
+readiness, access isolation, automatic synchronization and broader answer
+quality still need testing.
+
+## Example question
 
 > When is Building A's air-handling unit next due for service, and what
 > preparation procedure applies?
 
-A useful answer needs two kinds of evidence:
-
-| Information needed | Source of truth |
+| Information needed | Source |
 | --- | --- |
-| The recorded next service date | Structured asset and maintenance records |
-| The applicable preparation procedure | The current operating procedure or manual |
+| Next service date | Asset and maintenance records |
+| Preparation steps | Current procedure or equipment manual |
 
-The target workflow retrieves the procedure, calls the asset API and assembles
-an answer with references to both sources. Missing dates remain unknown, failed
-lookups remain visible, and a superseded procedure must not be presented as the
-current instruction.
+The planned workflow retrieves the procedure, calls the asset API and cites
+both sources. If a date is missing or a lookup fails, the answer should say so.
+It should use the current procedure rather than a superseded revision.
 
-## Design priorities
+## Design decisions
 
-- **Grounded answers:** retain document citations and database references so a
-  reader can inspect the supporting evidence.
-- **Controlled tool access:** expose validated asset lookups through an API,
-  with server-defined scope and parameterised queries.
-- **Honest failure handling:** distinguish missing information, denied access,
-  unavailable services and unsupported questions.
-- **Observable execution:** investigate API requests through traces, metrics
-  and logs, with optional LangSmith visibility into the agent workflow.
-- **Measured quality:** assess answer correctness, grounding, citations, tool
-  behaviour and scope using a repeatable evaluation process.
+- Keep database facts separate from document retrieval. Query asset records
+  through validated API tools with parameterised SQL and server-defined scope.
+- Cite supporting documents and database references so readers can check answers.
+- Distinguish missing information, denied access and service failures.
+- Use traces and metrics to inspect API requests, with optional LangSmith
+  tracing for the agent workflow.
+- Evaluate factual accuracy, citations, tool use and access boundaries separately.
 
 ## Target architecture
 
@@ -72,107 +87,105 @@ flowchart TD
     Agent -. Optional workflow traces .-> LangSmith[LangSmith]
 ```
 
-Document ingestion prepares the retrieval index. Structured lookups happen at
-question time through the API. Database facts remain separate from document
-knowledge, with each contributing its own evidence to the answer.
+Ingestion parses source documents and builds the OpenSearch index. At question
+time, the agent retrieves document chunks and, once implemented, calls the
+asset API for structured records.
 
-The diagram describes the target design. API server spans and LangSmith runs
-are separate telemetry paths, associated manually where verified; they do not
-form an automatic end-to-end trace of every model operation or database query.
+The diagram includes planned components. API server spans and LangSmith runs
+follow separate telemetry paths. The design uses manual association where
+verified; it does not provide an automatic end-to-end trace of every model
+operation or database query.
 
 ## Technology choices
 
-| Technology | Role and rationale |
+| Technology | Purpose |
 | --- | --- |
-| OpenRAG, Docling and OpenSearch | Document ingestion, parsing and retrieval |
-| Google Drive and Amazon S3 | Separate source repositories for procedures, contracts and manuals |
-| Langflow | Visual orchestration and model-visible tool definitions |
-| Hosted OpenAI models | Generation and embeddings without running a local model |
-| FastAPI and SQLite | A small, deterministic service for read-only operational facts |
-| OpenTelemetry, Tempo, Prometheus and Grafana | API request diagnostics and operational visibility |
-| LangSmith, optional | Agent workflow inspection with payload privacy controls |
+| OpenRAG, Docling and OpenSearch | Ingest, parse, index and retrieve documents |
+| Google Drive and Amazon S3 | Store procedures, contracts and manuals |
+| Langflow | Orchestrate the agent and define its tools |
+| Hosted OpenAI models | Generate answers and embeddings without a local model |
+| FastAPI and SQLite | Provide planned read-only asset and maintenance lookups |
+| OpenTelemetry, Tempo, Prometheus and Grafana | Provide planned API traces, metrics and dashboards |
+| LangSmith, optional | Inspect agent runs with payload privacy controls |
 
-The development environment uses WSL2 and Docker Desktop. The initial design
-keeps the database local and stages supporting services to manage memory and
-cost on a single machine.
-
-## Evaluation approach
-
-The prepared fictional dataset spans two buildings, with current documents,
-archived revisions, asset records and maintenance history. Evaluation scenarios
-cover document questions, database questions, combined answers, unavailable
-information, access boundaries and service failures.
-
-Answers will be reviewed against source evidence. Reports will distinguish
-completed tests from blocked or untested cases, and separate answer quality
-from operational health. A successful HTTP request or a visible trace alone
-does not establish that an answer is correct.
-
-Measured results and reproduction instructions will be published alongside the
-implementation once verified.
-
-## Security and operational scope
-
-All business records are fictional. The intended asset API uses fixed
-demonstration credentials with server-defined building scopes. Authenticated
-end-user identity propagation and document retrieval authorisation require
-separate implementation and verification.
-
-The initial system is read-only. It does not create work orders or permit
-model-generated SQL. Credentials, runtime environments and raw evidence stay
-outside this source repository; only reviewed source files, fictional fixtures
-and sanitised evidence are intended for publication.
+Development runs on WSL2 and Docker Desktop. The design keeps the database
+local and runs supporting services in stages to manage memory and cost on
+one machine.
 
 ## Repository layout
 
-| Path | Purpose |
+| Path | Contents |
 | --- | --- |
 | `data/documents/google_drive/` | 12 current profiles and operating procedures |
 | `data/documents/s3/` | 10 current contracts and equipment manuals |
-| `data/documents/manifest.json` | Document IDs, revisions, source paths and SHA256 hashes |
-| `data/database/` | Fictional asset records in CSV and reproducible SQLite SQL |
-| `evaluations/cases.jsonl` | 50 evaluation cases with answers and evidence references |
-| `evaluations/fixtures/` | Superseded documents and intended access expectations |
-| `tools/` | Offline validation and ingestion inventory commands |
+| `data/documents/manifest.json` | Document IDs, revisions, paths and SHA256 hashes |
+| `data/database/` | Fictional records in CSV and SQL to rebuild SQLite |
+| `evaluations/cases.jsonl` | 50 cases with expected answers and evidence references |
+| `evaluations/fixtures/` | Superseded procedures and access expectations |
+| `tools/` | Offline validation and ingestion inventory tools |
+| `docs/engineering/` | Integration investigations and technical decisions |
+| `docs/evidence/` | Validation results and their limits |
+| `docs/images/s3/` | Reviewed investigation screenshots |
+| `scripts/s3/` | Local S3 setup and native ingestion helpers |
 
-Ingestion selects only current manifest entries under `data/documents/`.
-Do not recursively ingest `data/` or the repository. Evaluation fixtures,
-expected answers, database records and the manifest itself are not ingestion
-inputs. See [the dataset reference](data/README.md) and
-[evaluation guidance](evaluations/README.md).
+Ingest only current manifest entries under `data/documents/`. Do not ingest
+the repository recursively: evaluation answers, archived fixtures, database
+records and the manifest must stay outside the retrieval index. See the
+[dataset reference](data/README.md) and [evaluation reference](evaluations/README.md).
 
 ## Run the offline checks
 
-Python 3.10 or later is required. These tools use only the standard library.
-Run from the repository root:
+Use Python 3.10 or later. The tools need only the standard library; they do not
+require credentials or running OpenRAG services. Run from the repository root:
 
 ```bash
 python3 tools/validate_dataset.py
 ```
 
-The validator checks hashes, evidence references, expected SQL results,
+The validator checks document hashes, evidence references, expected SQL results,
 database integrity, CSV consistency and asset manual references. It rebuilds
-SQLite in memory, requiring no credentials or running OpenRAG services.
-It does not measure model quality or enforce authorization.
+SQLite in memory. These checks validate the dataset, not live retrieval or
+authorization.
 
-Prepare the current documents and a private source inventory:
+To prepare a local upload selection and private source ledger:
 
 ```bash
 python3 tools/ingestion_inventory.py prepare --dataset data/documents --out runtime/ingestion
 ```
 
-The output directory must not already exist. This creates an upload selection
-and `source_ledger.csv`; it does not upload or ingest documents. After recording
-ingestion metadata, check the inventory structure with:
+Choose an output directory that does not exist yet. The command prepares files
+and `source_ledger.csv`; it does not upload them. After recording ingestion
+metadata, check the ledger structure:
 
 ```bash
 python3 tools/ingestion_inventory.py audit --dataset data/documents --ledger runtime/ingestion/source_ledger.csv
 ```
 
-The inventory can contain account aliases and provider references, so keep it
-under the ignored `runtime/` directory.
+Keep the ledger under the ignored `runtime/` directory. It can contain account
+aliases and provider references.
 
-## Project foundations
+## Evaluation and access boundaries
+
+The fictional dataset covers two buildings, current and superseded documents,
+asset records and maintenance history. The evaluation cases cover document
+retrieval, database lookups, combined answers, missing information, access
+boundaries and service failures.
+
+The [S3 validation record](docs/evidence/s3-validation.md) reports the current
+retrieval smoke test. Broader evaluation remains pending. A successful request
+or visible trace alone does not prove that an answer is correct.
+
+The planned asset API uses fixed demonstration credentials and server-defined
+building scopes. End-user identity propagation and document authorization need
+separate implementation and tests. A model refusal or user-editable search
+filter does not enforce an access boundary.
+
+Asset tools will support read-only lookups, not work-order creation or
+model-generated SQL. Keep credentials, runtime configuration and private raw
+evidence outside the repository. Publish only reviewed source, fictional data
+and approved evidence.
+
+## Upstream projects
 
 - [OpenRAG](https://docs.openr.ag/)
 - [Langflow](https://github.com/langflow-ai/langflow)
@@ -180,5 +193,5 @@ under the ignored `runtime/` directory.
 - [OpenTelemetry](https://opentelemetry.io/)
 - [LangSmith](https://www.langchain.com/langsmith)
 
-Dependencies retain their respective licences. A licence for this repository's
-original work has not yet been selected.
+Dependencies retain their own licences. This repository does not yet specify
+a licence for its original work.
