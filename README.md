@@ -7,7 +7,7 @@ Property teams often need to check several sources to answer one question.
 The vendor sits in a contract, the preparation steps in a procedure, and the
 next service date in a maintenance record. This project brings those sources
 into a retrieval-augmented generation (RAG) workflow with document citations
-and planned read-only asset lookups.
+and read-only asset lookups.
 
 ## Current status
 
@@ -15,9 +15,32 @@ The local OpenRAG deployment ingests ten contracts and manuals from Amazon S3
 and twelve profiles and SOPs from Google Drive. A retrieval smoke test returned
 an answer citing both an S3 contract and a Drive procedure.
 
-This repository contains the fictional dataset, offline validation tools,
-connector helpers and the S3 investigation with screenshots. The FastAPI asset
-service, database tools and observability stack remain planned work.
+The asset API and two custom Langflow tools now support recorded asset and
+maintenance lookups. API tests check fixed A/B credential scopes; operator
+captures show missing-date handling, clarification and a combined database/SOP
+answer. Exact citations in that combined answer and document access isolation
+still need verification. OTEL export, dashboards and broader evaluation remain
+planned work.
+
+## Asset API and agent tools
+
+The agent requests a specific asset or maintenance record through FastAPI.
+The API checks its fixed credential's building scope before running a
+parameterised, read-only SQLite query. A missing next service date stays
+unknown rather than becoming an inferred date.
+
+The managed OpenRAG flow combines these lookups with document retrieval. Both
+calls completed in the supplied combined run, but the final answer did not
+visibly cite exact database and document references. That is an open provenance
+check, not a complete citation pass.
+
+- [API source, contract and reproduction](services/asset_api/README.md)
+- [Langflow components and setup](integrations/langflow/README.md)
+- [Integration investigation](docs/engineering/asset-tools-integration.md)
+- [Validation results and screenshots](docs/evidence/asset-tools-validation.md)
+- [Why use an API alongside database access controls?](docs/decisions/0001-api-and-database-access.md)
+- [Fixed scopes versus user identity](docs/decisions/0002-fixed-scope-and-user-identity.md)
+- [Recorded facts and source attribution](docs/decisions/0003-recorded-facts-and-source-attribution.md)
 
 ## S3 integration investigation
 
@@ -48,8 +71,9 @@ quality still need testing.
 | Next service date | Asset and maintenance records |
 | Preparation steps | Current procedure or equipment manual |
 
-The planned workflow retrieves the procedure, calls the asset API and cites
-both sources. If a date is missing or a lookup fails, the answer should say so.
+The workflow retrieves the procedure and calls the asset API. Its answer must
+cite each source separately. If a date is missing or a lookup fails, the answer
+should say so.
 It should use the current procedure rather than a superseded revision.
 
 ## Design decisions
@@ -61,6 +85,19 @@ It should use the current procedure rather than a superseded revision.
 - Use traces and metrics to inspect API requests, with optional LangSmith
   tracing for the agent workflow.
 - Evaluate factual accuracy, citations, tool use and access boundaries separately.
+
+## Development approach
+
+Test from the data outward: validate the snapshot, test the API and bounded
+client, verify container connectivity, then exercise custom components and
+agent behaviour. Check missing data and denied requests as well as successful
+lookups. Inspect both tool execution and the final answer before recording an
+integration result.
+
+The [development methodology](docs/engineering/development-methodology.md)
+explains the sequence, troubleshooting decisions and evidence standards.
+Passing one layer does not certify the next; incomplete citation and access
+checks remain explicit.
 
 ## Target architecture
 
@@ -88,8 +125,9 @@ flowchart TD
 ```
 
 Ingestion parses source documents and builds the OpenSearch index. At question
-time, the agent retrieves document chunks and, once implemented, calls the
-asset API for structured records.
+time, the agent retrieves document chunks and calls the asset API for structured
+records. The API and SQLite path are implemented; the telemetry export paths
+in the diagram remain planned.
 
 The diagram includes planned components. API server spans and LangSmith runs
 follow separate telemetry paths. The design uses manual association where
@@ -104,7 +142,7 @@ operation or database query.
 | Google Drive and Amazon S3 | Store procedures, contracts and manuals |
 | Langflow | Orchestrate the agent and define its tools |
 | Hosted OpenAI models | Generate answers and embeddings without a local model |
-| FastAPI and SQLite | Provide planned read-only asset and maintenance lookups |
+| FastAPI and SQLite | Serve read-only asset and maintenance lookups with fixed credential scopes |
 | OpenTelemetry, Tempo, Prometheus and Grafana | Provide planned API traces, metrics and dashboards |
 | LangSmith, optional | Inspect agent runs with payload privacy controls |
 
@@ -123,9 +161,14 @@ one machine.
 | `evaluations/cases.jsonl` | 50 cases with expected answers and evidence references |
 | `evaluations/fixtures/` | Superseded procedures and access expectations |
 | `tools/` | Offline validation and ingestion inventory tools |
-| `docs/engineering/` | Integration investigations and technical decisions |
+| `services/asset_api/` | API, private runtime preparation, tests and Docker build |
+| `integrations/langflow/` | Bounded client, two custom tools and adapter tests |
+| `infra/asset-api.compose.yaml` | Private-network API deployment definition |
+| `docs/decisions/` | Architecture decisions and production trade-offs |
+| `docs/engineering/` | Integration investigations |
 | `docs/evidence/` | Validation results and their limits |
-| `docs/images/s3/` | Reviewed investigation screenshots |
+| `docs/images/s3/` | Reviewed S3 investigation screenshots |
+| `docs/images/asset-tools/` | Reviewed API and agent integration screenshots |
 | `scripts/s3/` | Local S3 setup and native ingestion helpers |
 
 Ingest only current manifest entries under `data/documents/`. Do not ingest
@@ -164,6 +207,18 @@ python3 tools/ingestion_inventory.py audit --dataset data/documents --ledger run
 Keep the ledger under the ignored `runtime/` directory. It can contain account
 aliases and provider references.
 
+After installing the pinned API requirements in a repository virtual environment,
+run the service and adapter suites:
+
+```bash
+.venv/bin/python -m unittest discover -s services/asset_api -p 'test_api.py' -v
+.venv/bin/python -m unittest discover -s integrations/langflow -p 'test_tool_client.py' -v
+```
+
+These tests create temporary databases and credentials and make no model calls.
+See the API README for environment setup. Repository packaging does not replace
+an existing running deployment; migrate it deliberately.
+
 ## Evaluation and access boundaries
 
 The fictional dataset covers two buildings, current and superseded documents,
@@ -171,16 +226,19 @@ asset records and maintenance history. The evaluation cases cover document
 retrieval, database lookups, combined answers, missing information, access
 boundaries and service failures.
 
-The [S3 validation record](docs/evidence/s3-validation.md) reports the current
-retrieval smoke test. Broader evaluation remains pending. A successful request
-or visible trace alone does not prove that an answer is correct.
+The [S3 record](docs/evidence/s3-validation.md) covers cross-source document
+retrieval. The [asset-tool record](docs/evidence/asset-tools-validation.md)
+separates 14 API tests, 12 adapter tests and operator observations. Broader
+evaluation remains pending. A successful request or visible trace alone does
+not prove answer correctness, source attribution or document authorization.
 
-The planned asset API uses fixed demonstration credentials and server-defined
-building scopes. End-user identity propagation and document authorization need
+The asset API uses fixed demonstration credentials and server-defined building
+scopes. All callers of a configured flow share its database credential.
+End-user identity propagation and document authorization need
 separate implementation and tests. A model refusal or user-editable search
 filter does not enforce an access boundary.
 
-Asset tools will support read-only lookups, not work-order creation or
+Asset tools support read-only lookups, not work-order creation or
 model-generated SQL. Keep credentials, runtime configuration and private raw
 evidence outside the repository. Publish only reviewed source, fictional data
 and approved evidence.

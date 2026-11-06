@@ -12,9 +12,15 @@ and do not use holdout answers to tune the agent.
 | `fixtures/superseded_documents/` | Two older preparation procedures for testing revision selection; exclude them from the active corpus. |
 | `fixtures/access_expectations.json` | Fictional identity-to-building scopes and expected access decisions. These specify tests, not a runtime policy engine. |
 
-Keep building isolation and authorization cases pending until the application
-implements and tests a trusted server-side boundary. A prompt, model refusal
-or user-editable search filter does not enforce isolation.
+The API suite tests fixed-credential database scopes separately from these
+evaluation cases. End-user identity propagation and building-scoped document
+retrieval remain pending. A prompt, model refusal or user-editable search filter
+does not enforce isolation. Do not mark those cases passed from API tests alone.
+
+See the [asset-tool validation record](../docs/evidence/asset-tools-validation.md)
+for the distinction between automated API checks, agent observations and
+remaining evidence gaps. These development diagnostics do not count as a
+held-out model evaluation or establish an accuracy percentage.
 
 ## Offline checks
 

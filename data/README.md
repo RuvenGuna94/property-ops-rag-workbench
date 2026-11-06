@@ -37,6 +37,11 @@ a new SQLite database under the ignored `runtime/` directory. Use your SQLite
 client. The script includes the schema and seed records, so do not also run
 `schema.sql` against that database. Keep generated databases out of Git.
 
+For the API's verified snapshot and fresh private operator credentials, use
+`services/asset_api/prepare_runtime.py` as described in the
+[API README](../services/asset_api/README.md). It rebuilds from this SQL and
+checks the original snapshot hash before starting a new runtime.
+
 ## Evaluation fixtures
 
 The [evaluation directory](../evaluations/README.md) holds expected answers,
