@@ -1,0 +1,41 @@
+name: property-ops-assets
+services:
+  asset-api:
+    build: ../services/asset_api
+    image: property-ops-asset-api:local
+    user: "${ASSET_UID:?Set ASSET_UID}:${ASSET_GID:?Set ASSET_GID}"
+    environment:
+      ASSET_DB: /data/property_ops.sqlite
+      ASSET_IDENTITIES: /run/property-ops/identities.json
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - type: bind
+        source: ${ASSET_RUNTIME:?Set ASSET_RUNTIME}/data/property_ops.sqlite
+        target: /data/property_ops.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ASSET_RUNTIME:?Set ASSET_RUNTIME}/.secrets/identities.json
+        target: /run/property-ops/identities.json
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    mem_limit: 384m
+    cpus: 1.0
+    networks:
+      tools:
+        aliases: [property-asset-api]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2).read()"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+networks:
+  tools:
+    external: true
+    name: property-ops-tools
