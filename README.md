@@ -9,7 +9,9 @@ next service date in a maintenance record. This project brings those sources
 into a retrieval-augmented generation (RAG) workflow with document citations
 and read-only asset lookups.
 
-## Current status
+## Project status
+
+**Under active development.**
 
 The local OpenRAG deployment ingests ten contracts and manuals from Amazon S3
 and twelve profiles and SOPs from Google Drive. A retrieval smoke test returned
