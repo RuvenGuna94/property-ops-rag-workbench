@@ -21,8 +21,9 @@ The asset API and two custom Langflow tools now support recorded asset and
 maintenance lookups. API tests check fixed A/B credential scopes; operator
 captures show missing-date handling, clarification and a combined database/SOP
 answer. Exact citations in that combined answer and document access isolation
-still need verification. OTEL export, dashboards and broader evaluation remain
-planned work.
+still need verification. A direct component result now correlates with an API
+server span stored in Tempo and viewed in Grafana. Live dashboard, denial and
+broader evaluation evidence remains incomplete; LangSmith is pending.
 
 ## Asset API and agent tools
 
@@ -62,6 +63,21 @@ the workaround and the successful retrieval test.
 The workaround applies to this release and local development setup. Production
 readiness, access isolation, automatic synchronization and broader answer
 quality still need testing.
+
+## API observability
+
+The API emits business-request counters, duration histograms and one server
+span per request. The Collector forwards spans to Tempo; Prometheus scrapes
+metrics directly. Grafana queries both stores. Tool results retain request and
+trace IDs so a specific lookup can be checked against its stored span.
+
+- [Monitoring source, tests and setup](observability/README.md)
+- [Operations and resource-pressure investigation](docs/engineering/api-observability.md)
+- [Trace-correlation evidence and remaining checks](docs/evidence/api-observability.md)
+
+The captured request completed in 7.53 ms at the API boundary. That single
+observation is not a performance benchmark or an end-to-end agent trace.
+LangSmith integration remains pending.
 
 ## Example question
 
@@ -128,8 +144,9 @@ flowchart TD
 
 Ingestion parses source documents and builds the OpenSearch index. At question
 time, the agent retrieves document chunks and calls the asset API for structured
-records. The API and SQLite path are implemented; the telemetry export paths
-in the diagram remain planned.
+records. The API, SQLite and local telemetry paths are implemented. A successful API
+trace has been observed in Tempo. Dashboard configuration is supplied; a populated
+live dashboard and the optional LangSmith path remain unverified.
 
 The diagram includes planned components. API server spans and LangSmith runs
 follow separate telemetry paths. The design uses manual association where
@@ -145,7 +162,7 @@ operation or database query.
 | Langflow | Orchestrate the agent and define its tools |
 | Hosted OpenAI models | Generate answers and embeddings without a local model |
 | FastAPI and SQLite | Serve read-only asset and maintenance lookups with fixed credential scopes |
-| OpenTelemetry, Tempo, Prometheus and Grafana | Provide planned API traces, metrics and dashboards |
+| OpenTelemetry, Tempo, Prometheus and Grafana | Collect API spans and metrics; inspect traces and configured dashboards |
 | LangSmith, optional | Inspect agent runs with payload privacy controls |
 
 Development runs on WSL2 and Docker Desktop. The design keeps the database
@@ -166,6 +183,7 @@ one machine.
 | `services/asset_api/` | API, private runtime preparation, tests and Docker build |
 | `integrations/langflow/` | Bounded client, two custom tools and adapter tests |
 | `infra/asset-api.compose.yaml` | Private-network API deployment definition |
+| `observability/` | Instrumented API wrapper, monitoring stack, dashboard and tests |
 | `docs/decisions/` | Architecture decisions and production trade-offs |
 | `docs/engineering/` | Integration investigations |
 | `docs/evidence/` | Validation results and their limits |
