@@ -1,0 +1,13 @@
+apiVersion: 1
+datasources:
+  - name: Property Prometheus
+    uid: property-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+  - name: Property Tempo
+    uid: property-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200

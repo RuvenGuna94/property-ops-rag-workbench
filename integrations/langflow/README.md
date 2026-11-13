@@ -109,3 +109,12 @@ prove a live Langflow build, tool schema, model choice or Docker network path.
 
 See the [integration record](../../docs/engineering/asset-tools-integration.md)
 and [validation evidence](../../docs/evidence/asset-tools-validation.md).
+
+## API trace correlation
+
+The client and custom components preserve `request_id` and `trace_id` from
+the observed API's HTTP response headers, including handled denial responses.
+An uninstrumented API can return a null trace ID; a transport failure does not
+invent IDs. The credential and URL remain outside model-controlled arguments.
+See the [monitoring setup](../../observability/README.md) and
+[captured correlation](../../docs/evidence/api-observability.md).

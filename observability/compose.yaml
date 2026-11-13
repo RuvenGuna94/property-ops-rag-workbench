@@ -1,0 +1,87 @@
+name: property-ops-observability
+services:
+  asset-api:
+    build: ./api-build
+    image: property-ops-asset-api:observed
+    user: "${LAB_UID:?Set LAB_UID}:${LAB_GID:?Set LAB_GID}"
+    environment:
+      ASSET_DB: /data/property_ops.sqlite
+      ASSET_IDENTITIES: /run/lab/identities.json
+    volumes:
+      - type: bind
+        source: ${ASSET_RUNTIME:?Set ASSET_RUNTIME}/data/property_ops.sqlite
+        target: /data/property_ops.sqlite
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${ASSET_RUNTIME:?Set ASSET_RUNTIME}/.secrets/identities.json
+        target: /run/lab/identities.json
+        read_only: true
+        bind: {create_host_path: false}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    mem_limit: 384m
+    networks:
+      tools:
+        aliases: [property-asset-api]
+      observe: {}
+  otel-collector:
+    image: otel/opentelemetry-collector:0.163.2
+    command: [--config=/etc/collector.yaml]
+    volumes: [./collector.yaml:/etc/collector.yaml:ro]
+    mem_limit: 128m
+    networks: [observe]
+  tempo:
+    image: grafana/tempo:3.1.1
+    command: [-config.file=/etc/tempo.yaml]
+    user: "0:0"
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    mem_limit: 768m
+    networks: [observe]
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=24h, --storage.tsdb.retention.size=256MB]
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports: ["127.0.0.1:9091:9090"]
+    mem_limit: 256m
+    networks: [observe, dashboard_access]
+  grafana:
+    image: grafana/grafana:13.2.4
+    environment:
+      GF_SECURITY_ADMIN_USER: labadmin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Generated in private .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
+      GF_DATABASE_WAL: "true"
+    volumes:
+      - ./datasources.yaml:/etc/grafana/provisioning/datasources/lab.yaml:ro
+      - grafana-data:/var/lib/grafana
+    ports: ["127.0.0.1:3001:3000"]
+    mem_limit: 1g
+    networks: [observe, dashboard_access]
+networks:
+  tools:
+    external: true
+    name: property-ops-tools
+  observe:
+    internal: true
+  dashboard_access:
+    driver: bridge
+volumes:
+  tempo-data:
+  prometheus-data:
+  grafana-data:
