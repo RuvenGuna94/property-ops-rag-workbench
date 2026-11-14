@@ -86,6 +86,22 @@ privacy are not demonstrated by those captures. See the
 [agent observability evidence](docs/evidence/agent-maintenance-observability.md)
 and [troubleshooting guide](docs/engineering/agent-api-observability.md).
 
+### Observed maintenance lookup
+
+The agent called the maintenance tool, returned the recorded service date and
+cited the database reference. It stated the dataset snapshot date separately.
+
+![Agent maintenance lookup with a database citation and snapshot date](docs/images/observability/agent-maintenance-answer.png)
+
+The supplied LangSmith waterfall shows a model call, the maintenance tool and a
+second model call that constructs the answer. Its nested durations overlap.
+
+![LangSmith waterfall showing the model-tool-model execution sequence](docs/images/observability/langsmith-maintenance-waterfall.png)
+
+The [full evidence record](docs/evidence/agent-maintenance-observability.md)
+also includes the matching API log and Tempo span, the timing discrepancy and
+the limits of the LangSmith association and privacy evidence.
+
 ## Example question
 
 > When is Building A's air-handling unit next due for service, and what

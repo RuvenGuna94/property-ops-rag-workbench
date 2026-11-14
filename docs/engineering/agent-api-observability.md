@@ -39,6 +39,24 @@ Nested waterfall durations overlap; do not sum parent and child durations.
 With payload hiding enabled, use local Langflow details to inspect tool arguments
 and returned facts. Absent usage or cost is unavailable, not zero.
 
+## Read the two execution views
+
+In the supplied LangSmith capture, two model calls surround the maintenance
+tool. Use this view to locate model or tool time before investigating the API.
+The screenshot does not expose payload privacy panels or the run identifier.
+
+![Agent model and tool execution waterfall in LangSmith](../images/observability/langsmith-maintenance-waterfall.png)
+
+The corresponding API evidence shows a SERVER span for the templated maintenance
+route with HTTP 200 and app.request_id. Use this view to inspect API execution,
+not model decisions. The request ID matches the tool output and API log; the
+API log and span durations differ and remain under investigation.
+
+![Tempo API span showing the request ID, route template and HTTP status](../images/observability/agent-maintenance-api-span.png)
+
+See the [validation record](../evidence/agent-maintenance-observability.md) for
+the exact identifiers, log screenshot and remaining verification gaps.
+
 ## Correlate one execution
 
 1. Pass the privacy canary before running property tools with tracing enabled.
