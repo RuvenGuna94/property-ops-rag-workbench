@@ -23,7 +23,9 @@ captures show missing-date handling, clarification and a combined database/SOP
 answer. Exact citations in that combined answer and document access isolation
 still need verification. A direct component result now correlates with an API
 server span stored in Tempo and viewed in Grafana. Live dashboard, denial and
-broader evaluation evidence remains incomplete; LangSmith is pending.
+broader evaluation evidence remains incomplete. A LangSmith model/tool waterfall
+is now captured; exact local-run association and privacy verification remain
+separate evidence gaps.
 
 ## Asset API and agent tools
 
@@ -77,7 +79,12 @@ trace IDs so a specific lookup can be checked against its stored span.
 
 The captured request completed in 7.53 ms at the API boundary. That single
 observation is not a performance benchmark or an end-to-end agent trace.
-LangSmith integration remains pending.
+A later agent lookup returned the recorded service date with a database citation.
+Its tool result, API log and Tempo span share a request ID. A supplied LangSmith
+waterfall shows the model-tool-model sequence; exact run association and payload
+privacy are not demonstrated by those captures. See the
+[agent observability evidence](docs/evidence/agent-maintenance-observability.md)
+and [troubleshooting guide](docs/engineering/agent-api-observability.md).
 
 ## Example question
 
@@ -146,7 +153,8 @@ Ingestion parses source documents and builds the OpenSearch index. At question
 time, the agent retrieves document chunks and calls the asset API for structured
 records. The API, SQLite and local telemetry paths are implemented. A successful API
 trace has been observed in Tempo. Dashboard configuration is supplied; a populated
-live dashboard and the optional LangSmith path remain unverified.
+live dashboard remains unverified. Agent-level LangSmith export is observed,
+with the correlation and privacy limits documented in the evidence record.
 
 The diagram includes planned components. API server spans and LangSmith runs
 follow separate telemetry paths. The design uses manual association where

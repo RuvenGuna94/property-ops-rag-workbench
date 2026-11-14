@@ -3,7 +3,9 @@
 Collect business-request metrics with Prometheus and export API server spans
 through the OpenTelemetry Collector to Tempo. Grafana queries both stores.
 Structured Docker logs connect a tool result to a trace through request and
-trace IDs. LangSmith is a separate, pending integration.
+trace IDs. LangSmith is a separate agent-level integration; its captured
+execution tree and remaining verification gaps are documented in the
+[agent evidence](../docs/evidence/agent-maintenance-observability.md).
 
 ```mermaid
 flowchart LR
