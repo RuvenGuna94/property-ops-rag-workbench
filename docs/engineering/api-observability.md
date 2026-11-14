@@ -3,7 +3,9 @@
 The monitoring stack answers two different questions: Prometheus summarizes
 request behaviour over time, while Tempo stores the span for one request.
 Grafana provides views over both. Logs remain in Docker; no Loki pipeline is
-configured. Agent-level LangSmith tracing remains pending.
+configured. Agent-level LangSmith export has been observed. See the
+[agent/API troubleshooting guide](agent-api-observability.md) for the separate
+execution boundaries and manual correlation procedure.
 
 ## Check from the service outward
 
