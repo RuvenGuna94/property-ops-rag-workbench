@@ -102,6 +102,21 @@ The [full evidence record](docs/evidence/agent-maintenance-observability.md)
 also includes the matching API log and Tempo span, the timing discrepancy and
 the limits of the LangSmith association and privacy evidence.
 
+### Tracing validation and remaining checks
+
+Additional captures document the registered APAC Local destination, successful
+model export and empty parent/model input/output panels. Runtime metadata remains
+visible, so this is a scoped payload-visibility observation rather than a claim
+that all trace data is hidden.
+
+- [Regional routing and first model export](docs/evidence/langsmith-routing-validation.md)
+- [Parent/model privacy inspection with screenshots](docs/evidence/langsmith-privacy-validation.md)
+- [Monitoring validation matrix and operational failures](docs/engineering/monitoring-validation-closeout.md)
+
+Live denial/outage/dashboard evidence and provider-cost reconciliation remain
+separate checks. The validation matrix distinguishes those gaps from completed
+functional observations.
+
 ## Example question
 
 > When is Building A's air-handling unit next due for service, and what
