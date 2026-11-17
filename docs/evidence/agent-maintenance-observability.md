@@ -38,7 +38,10 @@ The screenshot establishes export of an agent run containing the maintenance
 tool. It does not show the LangSmith run ID, full start time, shared local run
 identifier, token/cost breakdown or payload privacy panels. Its association to
 this specific lookup remains unverified in the published evidence. Redaction
-must be established separately through the canary and child-run inspection.
+must be established separately through the canary and child-run inspection. A later
+[payload review](langsmith-privacy-validation.md) shows empty parent/model
+panels with retained metadata; it does not establish privacy of this maintenance
+run or its tool children.
 
 ## API-side correlation
 

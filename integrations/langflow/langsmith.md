@@ -84,3 +84,12 @@ They do not prove live export, privacy redaction or billing readiness.
 
 References: [Langflow integration](https://docs.langflow.org/integrations-langsmith),
 [LangSmith privacy controls](https://docs.langchain.com/langsmith/mask-inputs-outputs).
+
+## Observed integration behaviour
+
+The [Local routing investigation](../../docs/evidence/langsmith-routing-validation.md)
+records the APAC registered-agent destination and successful parent/model export.
+The [privacy review](../../docs/evidence/langsmith-privacy-validation.md) shows
+empty input/output panels with runtime metadata still visible. These observations
+do not certify all-metadata removal or property-tool payload redaction. Retain the
+privacy gate and review each relevant run type before expanding tracing.
